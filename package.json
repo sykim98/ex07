@@ -1,6 +1,7 @@
 {
-  "name": "ex06",
+  "name": "ex07",
   "version": "0.1.0",
+  "author" : "김세영",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.14.1",

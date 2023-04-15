@@ -1,78 +1,72 @@
 import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react'
-import { Row, Col, Button, Form } from 'react-bootstrap'
+import { Row, Col, Button, Form, Card } from 'react-bootstrap'
+import Book from './Book';
 
 const BookPage = () => {
-    const ref_query = useRef(null);
+    const [list,setList] = useState([]);
     const [loading,setLoading] = useState(false);
-    const [books,setBooks] = useState([]);
-    const [total,setTotal] = useState(0);
     const [page,setPage] = useState(1);
-    const [isend,setIsend] = useState(false);
-    const [query,setQuery] = useState('리액트');
-
-    const getBooks = async() => {
+    const [is_end,setIs_end] = useState(false);
+    const [query,setQuery] = useState("리액트");
+    const getData = async() => {
         const url = "https://dapi.kakao.com/v3/search/book?target=title";
         const config = {
             headers : {"Authorization" : "KakaoAK 9a721d5da920fc1e2ed879739c608759"},
-            params : {"query": query, "size":6, "page":page}
-        };
+            params : {query: query, page:page, size:8}
+        }
         setLoading(true);
-        const result=await axios.get(url,config); // async. 비동기를 사용할 때 await 은 필수다.
-        setBooks(result.data.documents);
-        setTotal(result.data.meta.pageable_count);
-        setIsend(result.data.meta.is_end);
-
+        const result = await axios.get(url, config); 
         console.log(result);
+        setList(result.data.documents);
+        setIs_end(result.data.meta.is_end);
         setLoading(false);
-        ref_query.current.focus();
     }
 
-    useEffect(()=>{
-        getBooks();
-    },[page]) // []: rendering 처음할 때만 함수 실행, [page] : page 값이 바뀔때마다 함수 실행
-
-    if (loading) return <h1 className='text-center my-5'>Loading....</h1>
-
-    const onSubmit=(e)=>{
+    const onSubmit = (e) => {
         e.preventDefault();
-        getBooks();
+        setPage(1);
+        getData();
     }
+
+    useEffect(()=> {
+        getData();
+    }, [page]); // rendering 될 때마다 호출. [] : 1번만 호출
+
+    if (loading) return <h1 className='text-center my-5'>Loading</h1>
 
     return (
-        <Row className='my-5 mx-2'>
+        <Row>
+            <h1 className='text-center my-3'>도서검색</h1>
             <Row>
-                <Col className='mb-2'>
+                <Col md={3}>
                     <Form onSubmit={onSubmit}>
-                        <Form.Control value={query}
+                        <Form.Control 
                             onChange={(e)=>setQuery(e.target.value)}
-                            placeholder='검색어'
-                            ref={ref_query}
-                        />
+                            placeholder="검색어" value={query}/>
                     </Form>
                 </Col>
-                <Col>검색수 : {total}건</Col>
             </Row>
-            <hr/>
-            <Col>
-                <h1 className="text-center">도서검색</h1>
-                <Row>
-                    {books.map(book=>
-                        <Col key={book.isbn} className='box m-2'>
-                            <img src={book.thumbnail ? book.thumbnail : 'http://via.placeholder.com/170x150'}/>
-                            <div className='ellipsis'>{book.title}</div>
-                            <div>{book.price}원</div>
-                        </Col>
-                    )}
-                    <div className='text-center my-3'>
-                        <Button disabled={page==1 && true}
-                            onClick={()=>setPage(page-1)}>이전</Button>
-                        <span className='mx-3'>{page}</span>
-                        <Button disabled={isend==true && true}
-                            onClick={()=>setPage(page+1)}>다음</Button>
-                    </div>
-                </Row>
-            </Col>
+            <Row>
+                {list.map(book=>
+                    <Col key={book.isbn} md={3} xs={6} className="my-2">
+                        <Card>
+                            <Card.Body>
+                                <img src={book.thumbnail}/>
+                                <div className='ellipsis'>{book.title}</div>
+                                <Book book={book}/>
+                            </Card.Body>
+                        </Card>
+                    </Col>    
+                )}
+                <div className='text-center my-3'>
+                    <Button onClick={()=>setPage(page-1)}
+                        disabled = {page==1 && true} className="btn-sm">이전</Button>
+                    <span className='px-3'>{page}</span>
+                    <Button onClick={()=>setPage(page+1)}
+                        disabled = {is_end == true && true} className="btn-sm">다음</Button>
+                </div>
+            </Row>
         </Row>
     )
 }
